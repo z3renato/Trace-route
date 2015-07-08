@@ -26,7 +26,7 @@ int trace(unsigned long saddr, unsigned long daddr, int ttl) {
     char consulta[300];
     int loops, continua = 1;
     int escreve = 1;
-    //qtd de hops
+    
     for (loops = 0; loops < 3; loops++) {
 
 
@@ -89,7 +89,7 @@ int trace(unsigned long saddr, unsigned long daddr, int ttl) {
         ip->tot_len = htons(packet_size); //tamanho total
         ip->id = rand(); //id, gerado aleatoriamente
         ip->frag_off = 0; //bit de fragmentacao
-        ip->ttl = 100; //ttl
+        ip->ttl = ttl; //ttl
         ip->protocol = IPPROTO_ICMP; //protocolo que sera usado (icmp)
         ip->saddr = saddr; //IP de origem
         ip->daddr = daddr; //IP de destino
@@ -182,15 +182,21 @@ int trace(unsigned long saddr, unsigned long daddr, int ttl) {
 
 int pingReduzido(unsigned long saddr,unsigned long daddr ){
 	int x;
-	//qtd de hops
-	for(x = 0;x<4 ; x++){
-		unsigned long saddr;//endreco de origem
-		unsigned long daddr;//endereco de destino
-
+	int atingido = 0;
+	int ttl=20;
+	printf("\n");
+	system("clear");
+    char ipDestino[INET_ADDRSTRLEN]; //para escrever o IP destino na tela
+    inet_ntop(AF_INET, &(daddr), ipDestino, INET_ADDRSTRLEN); //atribui o ip destino a variável "ip"
+	printf("\nDisparando dados para (%s) \n", ipDestino);
+	struct timeval inicio, final;
+	int tempo_milisegundos;
+	int pacotesRecebidos=0 ;
+	float mediaPerda=0, rttMedio=0;
+	for(x=0;x<4; x++){
+		gettimeofday(&inicio, NULL);
 		char* buffer;//buffer que sera usado na recepcao dos dados
 		int addrlen;//tamanho da struct que contem o endereco de destino
-
-		
 
 		//criacao do socket
 		int sockfd = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP);
@@ -238,7 +244,7 @@ int pingReduzido(unsigned long saddr,unsigned long daddr ){
 		ip->tot_len = htons (packet_size);//tamanho total
 		ip->id = rand ();//id, gerado aleatoriamente
 		ip->frag_off = 0;//bit de fragmentacao
-		ip->ttl = 10;//ttl
+		ip->ttl = ttl;//ttl
 		ip->protocol = IPPROTO_ICMP;//protocolo que sera usado (icmp)
 		ip->saddr = saddr;//IP de origem
 		ip->daddr = daddr;//IP de destino
@@ -284,21 +290,33 @@ int pingReduzido(unsigned long saddr,unsigned long daddr ){
 		if (select(sockfd+1, &socks, NULL, NULL, &t) &&
 				recvfrom(sockfd, buffer, sizeof(struct iphdr) + sizeof(struct icmphdr), 0, (struct sockaddr *)&servaddr, &addrlen)!=-1)
 				{
+						
 						struct iphdr* ip_reply;
 						ip_reply = (struct iphdr*) buffer;
 
-						char str[INET_ADDRSTRLEN];
-						inet_ntop(AF_INET, &(ip_reply->saddr), str, INET_ADDRSTRLEN);
-						printf("TTL:%d    FROM: %s\n", x, str);
+						char ipAt[INET_ADDRSTRLEN];
+						inet_ntop(AF_INET, &(ip_reply->saddr), ipAt, INET_ADDRSTRLEN);
+						printf("Resposta de: %s ",  ipAt);
+						pacotesRecebidos++;
+						gettimeofday(&final, NULL);
+						tempo_milisegundos = (float) (1000 * (final.tv_sec - inicio.tv_sec) + (final.tv_usec - inicio.tv_usec) / 1000);
+						printf(" %dms ", (int) tempo_milisegundos);
+						rttMedio+=tempo_milisegundos;
 				}
-		else
-				puts("TIMEOUT");
-
+		else{
+				puts("esgotado tempo limite(timeout)");
+				ttl+=20;
+			}
 
 		free(packet);
 		free(buffer);
 		close(sockfd);
+		printf("\n");
 	}
+	mediaPerda = pacotesRecebidos/4;
+	printf("\n");
+	printf("\n%d pacotes enviados %d pacotes recebidos %2.2f tempo =%3.0f media de rtt: %4.2f TTL: %d\n ", x, pacotesRecebidos, mediaPerda*100, rttMedio, rttMedio/4, ttl);
+	return (0);
 
 
 }
@@ -309,7 +327,7 @@ int main(int argc, char **argv) {
         printf("uso: %s <IP destino>\n", argv[0]);
         exit(0);
     }
-    pingReduzido(system("ifconfig | grep 'inet end' | awk '{print $3}' | grep -v '127'"), inet_addr(argv[1]));
+   pingReduzido(system("ifconfig | grep 'inet end' | awk '{print $3}' | grep -v '127'"), inet_addr(argv[1]));
     //trace(system("ifconfig | grep 'inet end' | awk '{print $3}' | grep -v '127'"), inet_addr(argv[1]), 0);
     printf("\n");
 }
