@@ -323,7 +323,7 @@ int pingReduzido(unsigned long saddr,unsigned long daddr ){
 
 						char ipAt[INET_ADDRSTRLEN];
 						inet_ntop(AF_INET, &(ip_reply->saddr), ipAt, INET_ADDRSTRLEN);
-						printf("Resposta de: %s ",  ipAt);
+						printf("Resposta de: %s icmp_seq %d ttl %d",  ipAt, x+1, ttl);
 						pacotesRecebidos++;
 						gettimeofday(&final, NULL);
 						tempo_milisegundos = (float) (1000 * (final.tv_sec - inicio.tv_sec) + (final.tv_usec - inicio.tv_usec) / 1000);
@@ -465,7 +465,7 @@ int pingInfinito(unsigned long saddr,unsigned long daddr ){
 
 						char ipAt[INET_ADDRSTRLEN];
 						inet_ntop(AF_INET, &(ip_reply->saddr), ipAt, INET_ADDRSTRLEN);
-						printf("Resposta de: %s ",  ipAt);
+						printf("Resposta de: %s icmp_seq %d ttl %d",  ipAt, x+1, ttl);
 						pacotesRecebidos++;
 						gettimeofday(&final, NULL);
 						tempo_milisegundos = (float) (1000 * (final.tv_sec - inicio.tv_sec) + (final.tv_usec - inicio.tv_usec) / 1000);
