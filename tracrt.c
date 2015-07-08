@@ -33,7 +33,7 @@ int hostname_to_ip(char * hostname , char* ip){
     if ( (he = gethostbyname( hostname ) ) == NULL) 
     {
        
-        herror("gethostbyname");
+        
         return 1;
     }
  
@@ -155,7 +155,7 @@ int trace(unsigned long saddr, unsigned long daddr, int ttl) {
         struct timeval tempo;
         FD_ZERO(&socks);
         FD_SET(sockfd, &socks);
-        tempo.tv_sec = 3; //tempo segundos timeout
+        tempo.tv_sec = 1; //tempo segundos timeout
         tempo.tv_usec = 0;
         struct iphdr* ip_reply;
         ip_reply = (struct iphdr*) buffer;
@@ -311,7 +311,7 @@ int pingReduzido(unsigned long saddr,unsigned long daddr ){
 		struct timeval t;
 		FD_ZERO(&socks);
 		FD_SET(sockfd, &socks);
-		t.tv_sec = 3; //tempo segundos timeout
+		t.tv_sec = 1; //tempo segundos timeout
 		t.tv_usec = 0;
 
 		if (select(sockfd+1, &socks, NULL, NULL, &t) &&
@@ -342,7 +342,7 @@ int pingReduzido(unsigned long saddr,unsigned long daddr ){
 	}
 	mediaPerda = pacotesRecebidos/4;
 	printf("\n");
-	printf("\n%d pacotes enviados %3.0f pacotes recebidos %2.2f %% tempo =%3.0f media de rtt: %4.2f TTL: %d\n ", x, pacotesRecebidos, (float)(pacotesRecebidos/x)*100, rttMedio, rttMedio/4, ttl);
+	printf("\n%d pacotes enviados %3.0f pacotes recebidos %2.2f %% tempo =%3.0fms media de rtt: %4.2f TTL: %d\n ", x, pacotesRecebidos, (float)(pacotesRecebidos/x)*100, rttMedio, rttMedio/4, ttl);
 	return (0);
 
 
@@ -453,7 +453,7 @@ int pingInfinito(unsigned long saddr,unsigned long daddr ){
 		struct timeval t;
 		FD_ZERO(&socks);
 		FD_SET(sockfd, &socks);
-		t.tv_sec = 3; //tempo segundos timeout
+		t.tv_sec = 1; //tempo segundos timeout
 		t.tv_usec = 0;
 
 		if (select(sockfd+1, &socks, NULL, NULL, &t) &&
@@ -486,7 +486,7 @@ int pingInfinito(unsigned long saddr,unsigned long daddr ){
 	float pacotesEnviados = (float) x;
 	mediaPerda = (pacotesRecebidos/pacotesEnviados)*100.0;
 	printf("\n");
-	printf("\n%d pacotes enviados %d pacotes recebidos %2.2f %% tempo =%3.0f media de rtt: %4.2f TTL: %d\n ", x, pacotesRecebidos, mediaPerda, rttMedio, rttMedio/x, ttl);
+	printf("\n%d pacotes enviados %d pacotes recebidos %2.2f %% tempo =%3.0fms media de rtt: %4.2f TTL: %d\n ", x, pacotesRecebidos, mediaPerda, rttMedio, rttMedio/x, ttl);
 	return (0);
 
 
@@ -499,12 +499,14 @@ int main(int argc, char **argv) {
         exit(0);
     }
     char  hostname[20] ; char ip[12];
-    hostname_to_ip(argv[1], ip);
-
+    if(hostname_to_ip(argv[1], ip)){
+    	printf("\n\n***Host Desconhecido***\n\n\n");
+    	exit(0);
+    }
 
     int opc;
    do {
-    printf("\nEscolha seu comando:\n 1-Traceroute\n2-Ping infinito\n3-Ping de 4 pacotes\n0-Sair\n");
+    printf("\nEscolha seu comando:\n1-Traceroute\n2-Ping infinito\n3-Ping de 4 pacotes\n0-Sair\n");
     scanf(" %d",&opc);
 	}
     while(opc<0 || opc>3);
